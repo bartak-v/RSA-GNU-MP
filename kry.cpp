@@ -10,73 +10,49 @@
 
 using namespace std;
 
-bool miller_rabin_test(mpz_class d, mpz_class n)
-{
-    
-}
+gmp_randstate_t state;
 
 
-bool is_number_prime(mpz_class n) {
-    if (n <= 1 || n == 4) return false;
-    if (n <= 3) return true;
- 
-    // Find r such that n = 2^d * r + 1 for some r >= 1
-    mpz_class d = n - 1;
-    mpz_class d_mod_two_remainder;
-    mpz_class two = 2;
-    
-    mpz_mod(d_mod_two_remainder.get_mpz_t(), d.get_mpz_t(), two.get_mpz_t());
-    
-    while (d_mod_two_remainder == 0){
-        mpz_mod(d_mod_two_remainder.get_mpz_t(), d.get_mpz_t(), two.get_mpz_t());
-        d /= 2;
-    }
-        
- 
-    for (int i = 0; i < 100; i++)
-         if (!miller_rabin_test(d, n))
-              return false;
-
-    return true;
-}
-
-mpz_class generate_prime_number(mp_bitcnt_t prime_length){
-    gmp_randclass random = gmp_randclass(gmp_randinit_mt); // GMP randomness initialization 
-    mpz_class prime_number = random.get_z_bits(prime_length);
-    // TODO: Nastavení bitu na 1?
-    mpz_setbit(prime_number.get_mpz_t(),prime_length); // Nastavění Most sig bit  na 1?
-	while (!is_number_prime(prime_number))prime_number++;
-
-	return prime_number;
-}
-
+// Generate public and private RSA key with the given length
+// Output P Q N E D
 void rsa_generate(string num_of_bits){
-    // Generate public and private RSA key with the given length
-    // Output P Q N E D
-    int nbits = stoi(num_of_bits);
-    mp_bitcnt_t p_prime_length = nbits / 2, q_prime_length = nbits - p_prime_length; // lengths of prime numbers so that the public modulus N has n-bit size
-    mpz_class P,Q,N;
-    // Generating the prime numbers
-    while(true){
-            P = generate_prime_number(p_prime_length);
-			Q = generate_prime_number(q_prime_length);
-			N = P * Q;
-            // If we find number (the public modulus), that is equal to the specified number of bits we end the generating.
-			if (mpz_sizeinbase(N.get_mpz_t(), 2) == nbits) break;
-    }
-
+    num_of_bits="NOT IMPLEMENTED";
+    cout << num_of_bits << "\n";
     return;
 }
 
-void rsa_encrypt(string public_exponent, string public_modulus, string message){
-    // Encrypt message M with given E and N
+// Encrypts or decrypts the message by the RSA equation C = M ^ E mod N | M = C ^ D mod N
+char* rsa_enc_dec(mpz_t exponent, mpz_t modulus, mpz_t message)
+{
+    mpz_t p_c; // Plaintext or cryptogram, based on which operation we need
+    mpz_init(p_c);
+    mpz_powm(p_c, message, exponent, modulus);
+    return mpz_get_str(0, 16, p_c);
+}
+
+// Encrypt message M with given E and N
+void rsa_encrypt(string const public_exponent, string public_modulus, string message){
+    // Set the inner representation of E,N,M in GNU MP
+    mpz_t exponent,modulus,plaintext;
+    mpz_init_set_str(exponent, public_exponent.c_str(), 0); 
+    mpz_init_set_str(modulus, public_modulus.c_str(), 0);
+    mpz_init_set_str(plaintext, message.c_str(), 0); 
+    cout <<"0x" << rsa_enc_dec(exponent,modulus,plaintext) << "\n";
     return;
 }
 
 void rsa_decrypt(string private_exponent, string public_modulus, string ciphertext){
+    // Set the inner representation of D,N,C in GNU MP
+    mpz_t exponent,modulus,cryptogram;
+    mpz_init_set_str(exponent, private_exponent.c_str(), 0); 
+    mpz_init_set_str(modulus, public_modulus.c_str(), 0);
+    mpz_init_set_str(cryptogram, ciphertext.c_str(), 0); 
+    cout <<"0x" << rsa_enc_dec(exponent,modulus,cryptogram) << "\n";
     return;
 }
 void rsa_break(string public_modulus){
+    public_modulus="NOT IMPLEMENTED";
+    cout << public_modulus << "\n";
     return;
 }
 
@@ -85,15 +61,16 @@ enum RSA_Operation { gen, encr, decr, br};
 RSA_Operation current_op;
 
 int main(int argc, char** argv) {
+    gmp_randinit_default(state); // Initialize the GNU MP rand state
     // Get the option
     string opt="";
     if(argc >= 2) opt = argv[1]; 
-    // Set the option to be compared later
-    if(opt.compare("-g")  == 0) {current_op = gen;}
-    else if(opt.compare("-e")  == 0) {current_op = encr;}
-    else if(opt.compare("-d")  == 0) {current_op = decr;}
-    else if(opt.compare("-b")  == 0) {current_op = br;}
-    else{ cout << "You need to set the correct mode of operation (-g -e -d -b)" << endl; return 0;}
+    // Set the option to be compared
+    if(opt.compare("-g")  == 0) current_op = gen;
+    else if(opt.compare("-e")  == 0) current_op = encr;
+    else if(opt.compare("-d")  == 0) current_op = decr;
+    else if(opt.compare("-b")  == 0) current_op = br;
+    else{ cout << "You need to set the correct mode of operation (-g -e -d -b)" << endl; return EXIT_FAILURE;}
     
 
     // Check arguments and call the proper functions (expecting user to know what inputs to give us).
@@ -122,5 +99,5 @@ int main(int argc, char** argv) {
         default:
             break;
     }
-    return 0;
+    return EXIT_SUCCESS;
 }
