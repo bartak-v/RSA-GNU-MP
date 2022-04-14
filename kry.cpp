@@ -3,7 +3,8 @@
     Autor:   Vít Barták
     Datum:   10.03.2022
 */
-
+#include <cstddef> 
+#include <stddef.h> 
 #include <iostream>
 #include <string>
 #include <gmpxx.h>
@@ -80,7 +81,7 @@ int main(int argc, char **argv)
     gmp_randinit_default(state); // Initialize the GNU MP rand state
     string opt = "";             // Get the option
     if (argc >= 2)
-        opt = argv[1];
+        opt.assign(argv[1]);
     // Set the option to be compared
     if (opt.compare("-g") == 0)
         current_op = gen;
@@ -92,7 +93,7 @@ int main(int argc, char **argv)
         current_op = br;
     else
     {
-        cout << "You need to set the correct mode of operation (-g -e -d -b)" << endl;
+        cout << "You need to set the correct mode of operation (-g -e -d -b)\n";
         return EXIT_FAILURE;
     }
 
@@ -103,7 +104,7 @@ int main(int argc, char **argv)
     case RSA_Operation::gen:
         if (argc < 3)
         {
-            cout << "You need to set the number of bits (B) to be generated (./kry -g B)" << endl;
+            cout << "You need to set the number of bits (B) to be generated (./kry -g B)\n";
             break;
         }
         else
@@ -113,7 +114,7 @@ int main(int argc, char **argv)
     case RSA_Operation::encr:
         if (argc < 5)
         {
-            cout << "You need to set the public exponent (E), public modulus (N), and message (M) to be encrypted (./kry -e E N M)" << endl;
+            cout << "You need to set the public exponent (E), public modulus (N), and message (M) to be encrypted (./kry -e E N M)\n";
             break;
         }
         else
@@ -125,7 +126,7 @@ int main(int argc, char **argv)
     case RSA_Operation::decr:
         if (argc < 5)
         {
-            cout << "You need to set the private exponent (D), public modulus (N), and ciphertext (C) to be decrypted (./kry -d D N C)" << endl;
+            cout << "You need to set the private exponent (D), public modulus (N), and ciphertext (C) to be decrypted (./kry -d D N C)\n";
             break;
         }
         else
@@ -138,7 +139,7 @@ int main(int argc, char **argv)
         if (argc < 3)
         {
             cout << "You need to set public modulus (N) to be factorized"
-                 << "(./kry -b N)" << endl;
+                 << "(./kry -b N)\n";
             break;
         }
         else
