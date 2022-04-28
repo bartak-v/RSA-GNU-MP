@@ -26,22 +26,36 @@ void rsa_generate(string num_of_bits)
 // Output P
 void rsa_break(string public_modulus)
 {
-    // 1. check for 1 milion numbers - the trivial division method
-    mpz_t P, R, N, two; // P is the "prime" we are looking for R is remainder after division
+    // Initializations
+    mpz_t P, R, N, Np1, X, Y, XmY, C, D, ABS, two;
     mpz_init(P);
     mpz_init(R);
+    mpz_init(X);
+    mpz_init(Y);
+    mpz_init(C);
+    mpz_init(D);
+    mpz_init(XmY);
+    mpz_init(ABS);
+    mpz_init(Np1); // N+1
     mpz_init_set_ui(two, 2);
     mpz_init_set_str(N, public_modulus.c_str(), 0);
+    mpz_add_ui(Np1, N, 1);
 
     // If we can divide N by 2, 2 is our P
     mpz_mod(R, N, two);
-    if (mpz_sgn(R) == 0)
+    // If N is 0x1, return N
+    if (mpz_cmp_ui(N, 1) == 0)
+    {
+        mpz_set_ui(P, 1);
+        gmp_printf("%#Zx\n", P);
+    }
+    else if (mpz_sgn(R) == 0) // If we can divide by 2 P is two
     {
         mpz_set_ui(P, 2);
         gmp_printf("%#Zx\n", P);
     }
     else
-    {
+    { // Check for 1 milion numbers - the trivial division method
         for (int i = 3; i < 1000000; i++)
         {
             mpz_set_ui(P, i);
@@ -52,19 +66,81 @@ void rsa_break(string public_modulus)
                 gmp_printf("%#Zx\n", P);
                 mpz_clear(P);
                 mpz_clear(R);
+                mpz_clear(X);
+                mpz_clear(Y);
+                mpz_clear(C);
+                mpz_clear(D);
                 mpz_clear(N);
+                mpz_clear(Np1);
                 mpz_clear(two);
+                mpz_clear(ABS);
+                mpz_clear(XmY);
                 return;
             }
         }
-        // If it goes through, use some more sophisticated method -> Pollard Rho
 
+        // Pollard rho
+
+        // Safe random initialization
+        gmp_randstate_t rstate;
+        gmp_randinit_mt(rstate);
+        FILE *fp;
+        fp = fopen("/dev/urandom", "r");
+        int seed;
+        fread(const_cast<int *>((&seed)), sizeof(seed), 1, fp);
+        fclose(fp);
+        gmp_randseed_ui(rstate, seed);
+
+    pollard_rho:
+        mpz_urandomm(X, state, Np1); // Get random in range 0 n+1
+        mpz_urandomm(C, state, Np1);
+        mpz_set(Y, X);    // Y = X
+        mpz_set_ui(D, 1); // D is DIVISOR
+
+        while (mpz_cmp_ui(D, 1) == 0)
+        {
+
+            mpz_mul(X, X, X); // X= ((X*X)%N + C )% N
+            mpz_mod(X, X, N);
+            mpz_add(X, X, C);
+            mpz_mod(X, X, N);
+
+            mpz_mul(Y, Y, Y); // Y= ((Y*Y)%N + C )% N
+            mpz_mod(Y, Y, N);
+            mpz_add(Y, Y, C);
+            mpz_mod(Y, Y, N);
+
+            mpz_mul(Y, Y, Y); // Y = f(f(Y))
+            mpz_mod(Y, Y, N);
+            mpz_add(Y, Y, C);
+            mpz_mod(Y, Y, N);
+
+            // check gcd of |x-y| and n
+            mpz_sub(XmY, X, Y); // x-y
+            mpz_abs(ABS, XmY);  // |x-y|
+            mpz_gcd(D, ABS, N); // nesmim použít MPZ GCD!!!!
+            if (mpz_cmp(D, N) == 0)
+                goto pollard_rho; // Evil hack that works because we work with pointers.
+        }
+        gmp_printf("%#Zx\n", D);
     }
 
     mpz_clear(P);
     mpz_clear(R);
+    mpz_clear(X);
+    mpz_clear(Y);
+    mpz_clear(C);
+    mpz_clear(D);
     mpz_clear(N);
+    mpz_clear(Np1);
     mpz_clear(two);
+    mpz_clear(ABS);
+    mpz_clear(XmY);
+    gmp_randclear(state);
+}
+
+void pollard_rho(mpz_t N)
+{
 }
 
 /*  Encrypt or decrypt the message by the RSA equation C = M ^ E mod N | M = C ^ D mod N
