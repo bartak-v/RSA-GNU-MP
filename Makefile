@@ -1,21 +1,21 @@
 # Projekt: RSA and integer factorization
 # Autor:   Vít Barták
-# Datum:   10.03.2022 -11.2 # cxxflags -std=c++20
+# Datum:   10.03.2022
 
-CXX=g++
+CXX=g++-11.3
 XLOGINXX=xbarta47
 
 OBJ=kry.cpp
 BIN=kry
 
-CXXFLAGS:=-Wall -Wextra -Wsuggest-override -Wnull-dereference -Wshadow -Wold-style-cast -pedantic -lgmp 
+CXXFLAGS:=-Wall -Wextra -Wsuggest-override -Wnull-dereference -Wshadow -Wold-style-cast -pedantic -lgmp -std=c++20
 
 LINK.o = $(LINK.cpp)
 
 all: CXXFLAGS += -Ofast -march=native -flto
 all: kry
 
-debug: CXXFLAGS += -g3 -fsanitize=address,undefined -fno-omit-frame-pointer
+debug: CXXFLAGS += -g3 -fsanitize=address,undefined -fno-omit-frame-pointer 
 debug: kry
 
 debug_functional: CXXFLAGS += -g3
