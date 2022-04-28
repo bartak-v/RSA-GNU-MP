@@ -3,8 +3,8 @@
     Autor:   Vít Barták
     Datum:   10.03.2022
 */
-#include <cstddef> 
-#include <stddef.h> 
+#include <cstddef>
+#include <stddef.h>
 #include <iostream>
 #include <string>
 #include <gmpxx.h>
@@ -17,7 +17,7 @@ gmp_randstate_t state;
 // Output P Q N E D
 void rsa_generate(string num_of_bits)
 {
-    //num_of_bits = "NOT IMPLEMENTED";
+    // num_of_bits = "NOT IMPLEMENTED";
     cout << "\n";
     return;
 }
@@ -26,69 +26,35 @@ void rsa_generate(string num_of_bits)
 // Output D
 void rsa_break(string public_modulus)
 {
-    //public_modulus = "NOT IMPLEMENTED";
+    // public_modulus = "NOT IMPLEMENTED";
     cout << "\n";
     return;
 }
 
-// Encrypts or decrypts the message by the RSA equation C = M ^ E mod N | M = C ^ D mod N
-// We use the same function since RSA is 
-void rsa_encrypt_decrypt(mpz_t exponent, mpz_t modulus, mpz_t message)
+/*  Encrypt or decrypt the message by the RSA equation C = M ^ E mod N | M = C ^ D mod N
+    We use the same function since RSA is symmetric in this way.
+        Encrypt message M with given E and N
+        Output C
+
+        Decrypt cryptogram C with given D and N
+        Output M
+*/
+void rsa_encrypt_decrypt(string exponent_str, string modulus_str, string message_str)
 {
-    mpz_t p_c; // Plaintext or cryptogram, based on which operation we need
-    mpz_init(p_c);
+    mpz_t p_c, exponent, modulus, message;
+    mpz_init(p_c); // Plaintext or cryptogram, based on which operation we need at the moment.
+    mpz_init_set_str(exponent, exponent_str.c_str(), 0);
+    mpz_init_set_str(modulus, modulus_str.c_str(), 0);
+    mpz_init_set_str(message, message_str.c_str(), 0);
+
     mpz_powm(p_c, message, exponent, modulus);
-    char *temp =  mpz_get_str(0, 16, p_c);
-    cout << "0x" << temp << "\n";
+
+    gmp_printf("%#Zx\n", p_c);
+
     mpz_clear(p_c);
-    free(temp);
-    return;
-}
-
-
-// Encrypts or decrypts the message by the RSA equation C = M ^ E mod N | M = C ^ D mod N
-void rsa_enc_dec(mpz_t exponent, mpz_t modulus, mpz_t message)
-{
-    mpz_t p_c; // Plaintext or cryptogram, based on which operation we need
-    mpz_init(p_c);
-    mpz_powm(p_c, message, exponent, modulus);
-    char *temp =  mpz_get_str(0, 16, p_c);
-    cout << "0x" << temp << "\n";
-    mpz_clear(p_c);
-    free(temp);
-    return;
-}
-
-// Encrypt message M with given E and N
-// Output C
-void rsa_encrypt(string public_exponent, string public_modulus, string message)
-{
-    // Set the inner representation of E,N,M in GNU MP
-    mpz_t exponent, modulus, plaintext;
-    mpz_init_set_str(exponent, public_exponent.c_str(), 0);
-    mpz_init_set_str(modulus, public_modulus.c_str(), 0);
-    mpz_init_set_str(plaintext, message.c_str(), 0);
-    rsa_enc_dec(exponent, modulus, plaintext);
-    
     mpz_clear(exponent);
     mpz_clear(modulus);
-    mpz_clear(plaintext);
-}
-
-// Decrypt cryptogram C with given D and N
-// Output M
-void rsa_decrypt(string private_exponent, string public_modulus, string ciphertext)
-{
-    // Set the inner representation of D,N,C in GNU MP
-    mpz_t exponent, modulus, cryptogram;
-    mpz_init_set_str(exponent, private_exponent.c_str(), 0);
-    mpz_init_set_str(modulus, public_modulus.c_str(), 0);
-    mpz_init_set_str(cryptogram, ciphertext.c_str(), 0);
-    rsa_enc_dec(exponent, modulus, cryptogram);
-    
-    mpz_clear(exponent);
-    mpz_clear(modulus);
-    mpz_clear(cryptogram);
+    mpz_clear(message);
 }
 
 // Modes of RSA operation
@@ -144,7 +110,7 @@ int main(int argc, char **argv)
         }
         else
         {
-            rsa_encrypt(argv[2], argv[3], argv[4]);
+            rsa_encrypt_decrypt(argv[2], argv[3], argv[4]);
         }
         break;
 
@@ -156,7 +122,7 @@ int main(int argc, char **argv)
         }
         else
         {
-            rsa_decrypt(argv[2], argv[3], argv[4]);
+            rsa_encrypt_decrypt(argv[2], argv[3], argv[4]);
         }
         break;
 
