@@ -52,7 +52,7 @@ void rsa_break(string public_modulus)
     mpz_init_set_str(N, public_modulus.c_str(), 0);
     mpz_add_ui(Np1, N, 1);
 
-    // If we can divide N by 2, 2 is our P
+
     mpz_mod(R, N, two);
     // If N = 1, return N
     if (mpz_cmp_ui(N, 1) == 0)
@@ -73,7 +73,7 @@ void rsa_break(string public_modulus)
             mpz_cdiv_r(R, N, P);
             if (mpz_sgn(R) == 0)
             {
-                // P divides N without remainder -> P is our prime.
+                // P divides N without remainder -> P is our prime
                 gmp_printf("%#Zx\n", P);
                 mpz_clear(P);
                 mpz_clear(R);
