@@ -11,19 +11,30 @@
 
 using namespace std;
 
-gmp_randstate_t state;
-
-// Generate public and private RSA key with the given length
-// Output P Q N E D
-void rsa_generate(string num_of_bits)
+// Count the GCD of two mpz_t big integers (Euclid's algorithm)
+void e_gcd(mpz_t result, mpz_t X, mpz_t Y)
 {
-    // num_of_bits = "NOT IMPLEMENTED";
-    cout << "\n";
-    return;
+    mpz_t a, b, divisor;
+    mpz_init(a);
+    mpz_init(b);
+    mpz_init(divisor);
+    mpz_set(a, X);
+    mpz_set(b, Y);
+    while (mpz_sgn(a) > 0)
+    {
+        mpz_set(divisor, a);
+        mpz_mod(a, b, a);
+        mpz_set(b, divisor);
+    }
+    mpz_set(result, divisor); // "return"
+
+    mpz_clear(a);
+    mpz_clear(b);
+    mpz_clear(divisor);
 }
 
-// Break the RSA by prime factorization
-// Output P
+// Break the RSA by integer factorization
+// Output one of the two primes P (or Q) - thanks to randomness, it gets back one of them.
 void rsa_break(string public_modulus)
 {
     // Initializations
@@ -43,7 +54,7 @@ void rsa_break(string public_modulus)
 
     // If we can divide N by 2, 2 is our P
     mpz_mod(R, N, two);
-    // If N is 0x1, return N
+    // If N = 1, return N
     if (mpz_cmp_ui(N, 1) == 0)
     {
         mpz_set_ui(P, 1);
@@ -55,7 +66,7 @@ void rsa_break(string public_modulus)
         gmp_printf("%#Zx\n", P);
     }
     else
-    { // Check for 1 milion numbers - the trivial division method
+    { // Check for first 1 milion numbers - the trivial division method
         for (int i = 3; i < 1000000; i++)
         {
             mpz_set_ui(P, i);
@@ -79,33 +90,33 @@ void rsa_break(string public_modulus)
             }
         }
 
-        // Pollard rho
+        // Pollard Rho factorization algorithm
 
         // Safe random initialization
         gmp_randstate_t rstate;
-        gmp_randinit_mt(rstate);
+        gmp_randinit_default(rstate);
+
         FILE *fp;
-        fp = fopen("/dev/urandom", "r");
+        fp = fopen("/dev/urandom", "r"); // Get our randomness from /dev/urandom (more secure than getting it from time)
         int seed;
         fread(const_cast<int *>((&seed)), sizeof(seed), 1, fp);
         fclose(fp);
         gmp_randseed_ui(rstate, seed);
 
     pollard_rho:
-        mpz_urandomm(X, state, Np1); // Get random in range 0 n+1
-        mpz_urandomm(C, state, Np1);
+        mpz_urandomm(X, rstate, Np1); // Get random number in range 0 n+1
+        mpz_urandomm(C, rstate, Np1);
         mpz_set(Y, X);    // Y = X
         mpz_set_ui(D, 1); // D is DIVISOR
 
         while (mpz_cmp_ui(D, 1) == 0)
         {
-
-            mpz_mul(X, X, X); // X= ((X*X)%N + C )% N
+            mpz_mul(X, X, X); // X = ((X*X)%N + C )% N == f(X) where f() is polynomial mod n
             mpz_mod(X, X, N);
             mpz_add(X, X, C);
             mpz_mod(X, X, N);
 
-            mpz_mul(Y, Y, Y); // Y= ((Y*Y)%N + C )% N
+            mpz_mul(Y, Y, Y); // Y = ((Y*Y)%N + C )% N == f(Y)
             mpz_mod(Y, Y, N);
             mpz_add(Y, Y, C);
             mpz_mod(Y, Y, N);
@@ -115,14 +126,15 @@ void rsa_break(string public_modulus)
             mpz_add(Y, Y, C);
             mpz_mod(Y, Y, N);
 
-            // check gcd of |x-y| and n
+            // Get D as gcd of |x-y| and n
             mpz_sub(XmY, X, Y); // x-y
             mpz_abs(ABS, XmY);  // |x-y|
-            mpz_gcd(D, ABS, N); // nesmim použít MPZ GCD!!!!
+            e_gcd(D, ABS, N);   // call my own GCD function
             if (mpz_cmp(D, N) == 0)
-                goto pollard_rho; // Evil hack that works because we work with pointers.
+                goto pollard_rho; // Nasty trick that works, because we work with pointers. (the CPU doesn't care, nor do the sanitizers)
         }
         gmp_printf("%#Zx\n", D);
+        gmp_randclear(rstate);
     }
 
     mpz_clear(P);
@@ -136,11 +148,6 @@ void rsa_break(string public_modulus)
     mpz_clear(two);
     mpz_clear(ABS);
     mpz_clear(XmY);
-    gmp_randclear(state);
-}
-
-void pollard_rho(mpz_t N)
-{
 }
 
 /*  Encrypt or decrypt the message by the RSA equation C = M ^ E mod N | M = C ^ D mod N
@@ -181,8 +188,7 @@ RSA_Operation current_op;
 
 int main(int argc, char **argv)
 {
-    gmp_randinit_default(state); // Initialize the GNU MP rand state
-    string opt = "";             // Get the option
+    string opt = ""; // Get the option
     if (argc >= 2)
         opt.assign(argv[1]);
     // Set the option to be compared
@@ -211,7 +217,7 @@ int main(int argc, char **argv)
             break;
         }
         else
-            rsa_generate(argv[2]);
+            cout << "\n";
         break;
 
     case RSA_Operation::encr:
