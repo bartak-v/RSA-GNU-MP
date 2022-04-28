@@ -23,12 +23,48 @@ void rsa_generate(string num_of_bits)
 }
 
 // Break the RSA by prime factorization
-// Output D
+// Output P
 void rsa_break(string public_modulus)
 {
-    // public_modulus = "NOT IMPLEMENTED";
-    cout << "\n";
-    return;
+    // 1. check for 1 milion numbers - the trivial division method
+    mpz_t P, R, N, two; // P is the "prime" we are looking for R is remainder after division
+    mpz_init(P);
+    mpz_init(R);
+    mpz_init_set_ui(two, 2);
+    mpz_init_set_str(N, public_modulus.c_str(), 0);
+
+    // If we can divide N by 2, 2 is our P
+    mpz_mod(R, N, two);
+    if (mpz_sgn(R) == 0)
+    {
+        mpz_set_ui(P, 2);
+        gmp_printf("%#Zx\n", P);
+    }
+    else
+    {
+        for (int i = 3; i < 1000000; i++)
+        {
+            mpz_set_ui(P, i);
+            mpz_cdiv_r(R, N, P);
+            if (mpz_sgn(R) == 0)
+            {
+                // P divides N without remainder -> P is our prime.
+                gmp_printf("%#Zx\n", P);
+                mpz_clear(P);
+                mpz_clear(R);
+                mpz_clear(N);
+                mpz_clear(two);
+                return;
+            }
+        }
+        // If it goes through, use some more sophisticated method -> Pollard Rho
+
+    }
+
+    mpz_clear(P);
+    mpz_clear(R);
+    mpz_clear(N);
+    mpz_clear(two);
 }
 
 /*  Encrypt or decrypt the message by the RSA equation C = M ^ E mod N | M = C ^ D mod N
