@@ -1,8 +1,8 @@
 # Projekt: RSA and integer factorization
 # Autor:   Vít Barták
-# Datum:   10.03.2022 -11.2 # cxxflags -std=c++20
+# Datum:   10.03.2022
 
-CXX=g++-11.2
+CXX=g++-11.3
 XLOGINXX=xbarta47
 
 OBJ=kry.cpp
